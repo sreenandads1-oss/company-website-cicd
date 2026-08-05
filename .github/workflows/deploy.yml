@@ -1,0 +1,38 @@
+name: Deploy Website to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # 1. Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      # 2. Configure SSH using GitHub Secret
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+
+      # 3. Copy website files to EC2
+      - name: Deploy website files
+        run: |
+          scp -r index.html about.html contact.html css js \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/var/www/html/
+
+
+      # 4. Display success message
+      - name: Deployment successful
+        run: echo "Website deployment completed successfully!"
